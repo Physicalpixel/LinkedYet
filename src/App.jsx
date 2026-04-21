@@ -17,7 +17,7 @@ const App = () => {
 	const [isMenuOpen, setIsMenuOpen] = useState(false)
 
 	useEffect(() => {
-		const unsubscribe = subscribeToGraph((sessionId, data) => {
+		const unsubscribe = subscribeToGraph(sessionId, (data) => {
 			setGraphData({
 				nodes: Array.isArray(data.nodes) ? [...data.nodes] : [],
 				links: Array.isArray(data.links) ? [...data.links] : [],

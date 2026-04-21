@@ -24,7 +24,7 @@ export const addUserConnections = async (sessionId, userName, connectionNames) =
 		// Ensure all target connections also exist as nodes
 		const batch = writeBatch(db)
 		for (const connName of connectionNames) {
-			const connRef = doc(db, "users", connName)
+			const connRef = doc(usersCol, connName)
 			batch.set(connRef, {id: connName}, {merge: true})
 		}
 		await batch.commit()
@@ -37,8 +37,8 @@ export const addUserConnections = async (sessionId, userName, connectionNames) =
 /**
  * 2. Real-time subscription
  */
-export const subscribeToGraph = (onUpdate) => {
-	const usersCollection = collection(db, "users")
+export const subscribeToGraph = (sessionId, onUpdate) => {
+	const usersCollection = collection(db, "sessions", sessionId, "users")
 	const q = query(usersCollection)
 
 	return onSnapshot(
@@ -97,7 +97,7 @@ export const subscribeToGraph = (onUpdate) => {
  */
 export const clearAllData = async (sessionId) => {
 	try {
-		const usersCollection = collection(db, sessions, sessionId, "users")
+		const usersCollection = collection(db, "sessions", sessionId, "users")
 		const snapshot = await getDocs(usersCollection)
 
 		const batch = writeBatch(db)
