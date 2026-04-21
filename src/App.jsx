@@ -2,15 +2,22 @@ import React, {useState, useEffect, useRef} from "react"
 import * as d3 from "d3"
 import {QRCodeSVG} from "qrcode.react"
 import {addUserConnections, subscribeToGraph, clearAllData} from "./firebaseService"
-
+import {fruitImageUrl} from "./helpers/fruits"
 const App = () => {
+	const params = new URLSearchParams(window.location.search)
+	let sessionId = params.get("session")
+	if (!sessionId) {
+		sessionId = crypto.randomUUID()
+		params.set("session", sessionId)
+		window.history.replaceState({}, "", `?${params.toString()}`)
+	}
 	const [view, setView] = useState("home")
 	const [graphData, setGraphData] = useState({nodes: [], links: []})
 	const [loading, setLoading] = useState(false)
 	const [isMenuOpen, setIsMenuOpen] = useState(false)
 
 	useEffect(() => {
-		const unsubscribe = subscribeToGraph((data) => {
+		const unsubscribe = subscribeToGraph((sessionId, data) => {
 			setGraphData({
 				nodes: Array.isArray(data.nodes) ? [...data.nodes] : [],
 				links: Array.isArray(data.links) ? [...data.links] : [],
@@ -27,7 +34,7 @@ const App = () => {
 	const handleAddConnections = async (userName, connectionNames) => {
 		try {
 			setLoading(true)
-			await addUserConnections(userName, connectionNames)
+			await addUserConnections(sessionId, userName, connectionNames)
 			setView("graph")
 		} catch (err) {
 			alert("Error adding connections.")
@@ -39,7 +46,7 @@ const App = () => {
 	const handleReset = async () => {
 		try {
 			setLoading(true)
-			await clearAllData()
+			await clearAllData(sessionId)
 		} catch (err) {
 			alert("Error resetting data.")
 		} finally {
@@ -112,12 +119,12 @@ const App = () => {
 					<div className="text-center w-full max-w-xl p-6 sm:p-16 bg-purple-850 backdrop-blur-2xl rounded-[2rem] sm:rounded-[3rem] border border-white/10 shadow-2xl overflow-y-auto max-h-full">
 						<h1 className="text-4xl sm:text-6xl font-semibold mb-4 text-blue-50 tracking-tight">LinkedYet?</h1>
 						<p className="text-base sm:text-lg text-slate-400 mb-8 leading-relaxed text-center">Visualize connections in real-time.</p>
-						{/* <div className="bg-white p-3 sm:p-4 rounded-2xl sm:rounded-3xl inline-block shadow-2xl mb-8">
+						<div className="bg-white p-3 sm:p-4 rounded-2xl sm:rounded-3xl inline-block shadow-2xl mb-8">
 							<QRCodeSVG
 								value={window.location.href}
 								size={120}
 							/>
-						</div> */}
+						</div>
 						<br />
 						<button
 							className="w-full sm:w-auto bg-white text-indigo-950 px-8 sm:px-12 py-4 sm:py-5 text-lg sm:text-xl font-semibold rounded-xl sm:rounded-2xl shadow-xl hover:scale-105 active:scale-95 transition-all duration-300"
@@ -236,18 +243,17 @@ const NetworkGraph = ({data}) => {
 			avatarMap[node.id] = uniqueAvatarId
 		})
 
-		nodes.forEach((node) => {
-			const avatarId = avatarMap[node.id]
+		nodes.forEach((node, i) => {
 			const r = radiusScale(degrees[node.id])
-
-			defs
+			console.log(i)
+			return defs
 				.append("pattern")
 				.attr("id", `pattern-${node.id.replace(/\s+/g, "-")}`)
 				.attr("patternUnits", "objectBoundingBox")
 				.attr("width", 1)
 				.attr("height", 1)
 				.append("image")
-				.attr("xlink:href", `https://cdn.jsdelivr.net/gh/alohe/avatars/png/vibrent_${avatarId}.png`)
+				.attr("xlink:href", fruitImageUrl(i))
 				.attr("width", r * 2)
 				.attr("height", r * 2)
 				.attr("preserveAspectRatio", "xMidYMid slice")

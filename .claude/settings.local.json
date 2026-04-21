@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//e/network/src/**)",
+      "Read(//e/network/dist/**)"
+    ]
+  }
+}
